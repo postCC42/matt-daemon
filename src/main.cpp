@@ -21,7 +21,6 @@ int main(int argc, char* argv[]) {
     signal(SIGTERM, Utils::signalHandler);
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
-    signal(SIGKILL, Utils::signalHandler);
     try {
         global_logger = new Tintin_reporter();
 
