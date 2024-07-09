@@ -41,6 +41,7 @@ MattDaemon::~MattDaemon() {
 
 void MattDaemon::run() {
     // todo check if root
+    createLockFile();
     setupServer();
     daemonize();
     signal(SIGINT, Utils::signalHandler);
@@ -62,12 +63,11 @@ void MattDaemon::run() {
 }
 
 void MattDaemon::daemonize() {
-    createLockFile();
-    if (access(lockFile.c_str(), F_OK) == 0) {
-        startChildAndLetParentExit();
-        createNewSessionAndMoveToRoot();
+    if (!checkIfLockFileExists()) {
+        exit(EXIT_FAILURE);
     }
-
+    startChildAndLetParentExit();
+    createNewSessionAndMoveToRoot();
     global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Started.");
 }
 
@@ -88,7 +88,6 @@ void MattDaemon::runChildProcess() {
 
 
     while (true) {
-        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket: " + std::to_string(serverSocket) + ", Port: " + std::to_string(port));
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
             perror("runChild Accept failed");
@@ -117,6 +116,9 @@ void MattDaemon::createNewSessionAndMoveToRoot() {
 }
 
 void MattDaemon::setupServer() {
+    if (!checkIfLockFileExists()) {
+        exit(EXIT_FAILURE);
+    }
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
         global_logger->log(LOGLEVEL_ERROR, "Socket creation failed.");
@@ -124,7 +126,6 @@ void MattDaemon::setupServer() {
         exit(EXIT_FAILURE);
     }
     
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket created: " + std::to_string(serverSocket));
     sockaddr_in serverAddr;
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
@@ -140,8 +141,7 @@ void MattDaemon::setupServer() {
         perror("Listen failed");
         exit(EXIT_FAILURE);
     }
-
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket bound and listening.");
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket n. " + std::to_string(serverSocket) + " bound and listening on port n. " + std::to_string(port));
 }
 
 
@@ -207,4 +207,12 @@ void MattDaemon::deleteLockFileAndCloseSocket() {
 MattDaemon& MattDaemon::getInstance() {
     static MattDaemon instance; // This is a static local variable, ensures it's a singleton
     return instance;
+}
+
+bool MattDaemon::checkIfLockFileExists() {
+    if (access(lockFile.c_str(), F_OK) != 0) {
+        global_logger->log(LOGLEVEL_ERROR, "Lock file not found. Can't proceed further");
+        return false;
+    }
+        return true;
 }

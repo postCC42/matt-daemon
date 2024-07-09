@@ -48,6 +48,7 @@ class MattDaemon {
         void setupServer();
         void handleClientConnection(int clientSocket);
         void deleteLockFileAndCloseSocket();
+        bool checkIfLockFileExists();
 };
 
 #endif // MATT_DAEMON_HPP
