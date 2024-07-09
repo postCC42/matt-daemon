@@ -41,6 +41,7 @@ void MattDaemon::run() {
     daemonize();
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
+    signal(SIGTERM, Utils::signalHandler);
 
     global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Entering Daemon mode.");
 

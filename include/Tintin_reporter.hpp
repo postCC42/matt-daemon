@@ -24,7 +24,6 @@ class Tintin_reporter {
 
     public:
         Tintin_reporter();
-        explicit Tintin_reporter(const std::string &default_log_filename);
         ~Tintin_reporter();
         Tintin_reporter(const Tintin_reporter &rhs);
         Tintin_reporter &operator=(const Tintin_reporter &rhs);

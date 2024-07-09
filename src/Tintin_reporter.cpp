@@ -6,10 +6,6 @@ Tintin_reporter::Tintin_reporter() :logfileName(LOGFILE_PATH) {
     initializeLogFile();
 }
 
-Tintin_reporter::Tintin_reporter(const std::string &default_log_filename) :logfileName(default_log_filename) {
-    initializeLogFile();
-}
-
 Tintin_reporter::~Tintin_reporter() {
     if (logfile &&logfile->is_open()) {
        *logfile <<addTimestampAndLogLevel(LOGLEVEL_INFO, "Matt_Daemon is shutting down.") << std::endl;

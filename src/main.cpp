@@ -1,12 +1,13 @@
 #include "MattDaemon.hpp"
 #include "Tintin_reporter.hpp"
+#include "Utils.hpp"
 
 Tintin_reporter* global_logger = nullptr;
 
 int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
-
+    signal(SIGTERM, Utils::signalHandler);
     try {
         global_logger = new Tintin_reporter();
 
