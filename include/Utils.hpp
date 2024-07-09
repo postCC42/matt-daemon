@@ -14,6 +14,7 @@ extern Tintin_reporter* global_logger;
 class Utils {
 public:
     static void signalHandler(int signal);
+    static bool checkRootUser();
 };
 
 #endif // UTILS_HPP

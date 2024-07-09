@@ -7,11 +7,21 @@ Tintin_reporter* global_logger = nullptr;
 int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
+    if (!Utils::checkRootUser()) {
+        std::cerr << "Only root can run this program." << std::endl;
+        return EXIT_FAILURE;
+    }
     if (access(LOCKFILE_PATH, F_OK) == 0) {
         std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
         exit(EXIT_FAILURE);
     }
+    // todo handle remotion of filelock when SIGKILL
+    // probably need to use a file locking mechanism 
+    // that is impermeabile to unexpected terminations
     signal(SIGTERM, Utils::signalHandler);
+    signal(SIGINT, Utils::signalHandler);
+    signal(SIGQUIT, Utils::signalHandler);
+    signal(SIGKILL, Utils::signalHandler);
     try {
         global_logger = new Tintin_reporter();
 
