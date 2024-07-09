@@ -20,7 +20,6 @@ class MattDaemon {
 private:
     int serverSocket;
     int port;
-    std::string logFile;
     std::string lockFile;
     int maxClients;
     pid_t child_pid;

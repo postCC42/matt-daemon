@@ -7,7 +7,6 @@ extern Tintin_reporter *global_logger;
 MattDaemon::MattDaemon() 
     : serverSocket(-1),
       port(4242), 
-      logFile("/var/log/matt_daemon/matt_daemon.log"),
       lockFile("/var/lock/matt_daemon.lock"), 
       maxClients(3), 
       child_pid(-1) {}
