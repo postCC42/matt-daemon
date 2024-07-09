@@ -42,15 +42,15 @@ void MattDaemon::run() {
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
 
-    global_logger->log(LOGLVL_INFO, "Matt_daemon: Entering Daemon mode.");
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Entering Daemon mode.");
 
     while (true) {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
-            global_logger->log(LOGLVL_ERROR, "Accept failed: " + std::string(strerror(errno)));
+            global_logger->log(LOGLEVEL_ERROR, "Accept failed: " + std::string(strerror(errno)));
             continue;
         }
-        global_logger->log(LOGLVL_INFO, "Matt_daemon: Client connected.");
+        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
 
         std::thread(&MattDaemon::handleClientConnection, this, clientSocket).detach();
     }
@@ -61,8 +61,8 @@ void MattDaemon::daemonize() {
     createNewSessionAndMoveToRoot();
     createLockFile();
 
-    global_logger->log(LOGLVL_INFO, "Matt_daemon: Started.");
-    global_logger->log(LOGLVL_INFO, "Matt_daemon: Creating server.");
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Started.");
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Creating server.");
 }
 
 void MattDaemon::startChildAndLetParentExit() {
@@ -86,11 +86,11 @@ void MattDaemon::runChildProcess() {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
             perror("runChild Accept failed");
-            global_logger->log(LOGLVL_ERROR, "run Child global Accept failed.");
+            global_logger->log(LOGLEVEL_ERROR, "run Child global Accept failed.");
             continue;
         }
 
-        global_logger->log(LOGLVL_INFO, "Matt_daemon: Client connected.");
+        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
 
         handleClientConnection(clientSocket);
 
@@ -113,7 +113,7 @@ void MattDaemon::createNewSessionAndMoveToRoot() {
 void MattDaemon::setupServer() {
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
-        global_logger->log(LOGLVL_ERROR, "Socket creation failed.");
+        global_logger->log(LOGLEVEL_ERROR, "Socket creation failed.");
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
@@ -136,7 +136,7 @@ void MattDaemon::setupServer() {
         exit(EXIT_FAILURE);
     }
 
-    global_logger->log(LOGLVL_INFO, "Matt_daemon: Server created.");
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server created.");
     std::cout << "Server socket bound and listening." << std::endl; // Debug statement
 }
 
@@ -161,7 +161,7 @@ void MattDaemon::handleClientConnection(int clientSocket) {
             close(clientSocket);
             return;
         } else if (bytesRead == 0) {
-            global_logger->log(LOGLVL_INFO, "Matt_daemon: Client disconnected.");
+            global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Client disconnected.");
             close(clientSocket);
             return;
         }
@@ -169,11 +169,11 @@ void MattDaemon::handleClientConnection(int clientSocket) {
         buffer[bytesRead] = '\0';
         std::string input(buffer);
 
-        global_logger->log(LOGLVL_LOG, "Matt_daemon: User input: " + input);
+        global_logger->log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
 
         if (input == "quit\n") {
-            global_logger->log(LOGLVL_INFO, "Matt_daemon: Received quit command.");
-            global_logger->log(LOGLVL_INFO, "Matt_daemon: Quitting.");
+            global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
+            global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
             close(clientSocket);
             deleteLockFileAndCloseSocket();
             exit(EXIT_SUCCESS);
@@ -187,8 +187,8 @@ void MattDaemon::deleteLockFileAndCloseSocket() {
     }
     if (remove(lockFile.c_str()) != 0) {
         std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
-        global_logger->log(LOGLVL_ERROR, "Failed to delete lock file.");
+        global_logger->log(LOGLEVEL_ERROR, "Failed to delete lock file.");
         exit(EXIT_FAILURE);
     }
-    global_logger->log(LOGLVL_INFO, "Matt_daemon: Cleanup done.");
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Cleanup done.");
 }

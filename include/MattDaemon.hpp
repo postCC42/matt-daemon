@@ -16,32 +16,34 @@
 #include <arpa/inet.h>
 #include "Tintin_reporter.hpp"
 
+
 class MattDaemon {
-private:
-    int serverSocket;
-    int port;
-    std::string lockFile;
-    int maxClients;
-    pid_t child_pid;
 
-    void startChildAndLetParentExit();
-    void runChildProcess();
-    void createNewSessionAndMoveToRoot();
-    void createLockFile();
-    void setupServer();
-    void handleClientConnection(int clientSocket);
-    void deleteLockFileAndCloseSocket();
+    public:
+        MattDaemon();
+        MattDaemon(const MattDaemon& other);
+        MattDaemon& operator=(const MattDaemon& other);
+        MattDaemon(MattDaemon&& other) noexcept;
+        MattDaemon& operator=(MattDaemon&& other) noexcept;
+        ~MattDaemon();
 
-public:
-    MattDaemon();
-    MattDaemon(const MattDaemon& other);
-    MattDaemon& operator=(const MattDaemon& other);
-    MattDaemon(MattDaemon&& other) noexcept;
-    MattDaemon& operator=(MattDaemon&& other) noexcept;
-    ~MattDaemon();
+        void run();
+        void daemonize();
+        
+    private:
+        int serverSocket;
+        int port;
+        std::string lockFile;
+        int maxClients;
+        pid_t child_pid;
 
-    void run();
-    void daemonize();
+        void startChildAndLetParentExit();
+        void runChildProcess();
+        void createNewSessionAndMoveToRoot();
+        void createLockFile();
+        void setupServer();
+        void handleClientConnection(int clientSocket);
+        void deleteLockFileAndCloseSocket();
 };
 
 #endif // MATT_DAEMON_HPP
