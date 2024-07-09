@@ -1,9 +1,14 @@
 #include "Utils.hpp"
-#include <iostream>
-#include <unistd.h>
 
-void Utils::signalHandler(int sig_num) {
-    std::cout << "Interrupt signal (" << sig_num << ") received.\n";
-    std::remove("/var/lock/matt_daemon.lock");
-    exit(sig_num);
+void Utils::signalHandler(int signal) {
+    global_logger->log(LOGLEVEL_WARN, "Interrupt signal (" + std::to_string(signal) + ") received.");
+    if (signal == SIGTERM) {
+        MattDaemon& daemon = MattDaemon::getInstance();
+        daemon.deleteLockFileAndCloseSocket();
+        if (global_logger) {
+            delete global_logger;
+            global_logger = nullptr;
+        }
+        std::exit(signal);
+    }
 }

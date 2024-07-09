@@ -1,12 +1,8 @@
-#include "Tintin_reporter.hpp"
+#include "TintinReporter.hpp"
 
 
 
 Tintin_reporter::Tintin_reporter() :logfileName(LOGFILE_PATH) {
-    initializeLogFile();
-}
-
-Tintin_reporter::Tintin_reporter(const std::string &default_log_filename) :logfileName(default_log_filename) {
     initializeLogFile();
 }
 
