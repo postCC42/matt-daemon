@@ -1,15 +1,19 @@
 #include "MattDaemon.hpp"
-#include "Tintin_reporter.hpp"
+#include "TintinReporter.hpp"
 #include "Utils.hpp"
 
 extern Tintin_reporter *global_logger;
+MattDaemon* MattDaemon::instance = nullptr;
+
 
 MattDaemon::MattDaemon() 
-    : serverSocket(-1),
-      port(4242), 
-      lockFile("/var/lock/matt_daemon.lock"), 
-      maxClients(3), 
-      child_pid(-1) {}
+    :   serverSocket(-1),
+        port(4242), 
+        lockFile(LOCKFILE_PATH), 
+        maxClients(3), 
+        child_pid(-1) {
+        instance = this;
+}
 
 MattDaemon::MattDaemon(const MattDaemon& other)
     : serverSocket(other.serverSocket) {}
@@ -32,7 +36,7 @@ MattDaemon& MattDaemon::operator=(MattDaemon&& other) noexcept {
 }
 
 MattDaemon::~MattDaemon() {
-    deleteLockFileAndCloseSocket();
+    // deleteLockFileAndCloseSocket();
 }
 
 void MattDaemon::run() {
@@ -58,12 +62,13 @@ void MattDaemon::run() {
 }
 
 void MattDaemon::daemonize() {
-    startChildAndLetParentExit();
-    createNewSessionAndMoveToRoot();
     createLockFile();
+    if (access(lockFile.c_str(), F_OK) == 0) {
+        startChildAndLetParentExit();
+        createNewSessionAndMoveToRoot();
+    }
 
     global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Started.");
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Creating server.");
 }
 
 void MattDaemon::startChildAndLetParentExit() {
@@ -83,7 +88,7 @@ void MattDaemon::runChildProcess() {
 
 
     while (true) {
-        std::cout << "Server socket: " << serverSocket << ", Port: " << port << std::endl;
+        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket: " + std::to_string(serverSocket) + ", Port: " + std::to_string(port));
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
             perror("runChild Accept failed");
@@ -118,9 +123,8 @@ void MattDaemon::setupServer() {
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
-
-    std::cout << "Server socket created: " << serverSocket << std::endl; // Debug statement
-
+    
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket created: " + std::to_string(serverSocket));
     sockaddr_in serverAddr;
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
@@ -137,16 +141,17 @@ void MattDaemon::setupServer() {
         exit(EXIT_FAILURE);
     }
 
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server created.");
-    std::cout << "Server socket bound and listening." << std::endl; // Debug statement
+    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket bound and listening.");
 }
 
 
 void MattDaemon::createLockFile() {
     std::ofstream lockFileStream(lockFile);
     if (!lockFileStream) {
-        std::cerr << "Failed to create lock file: " << lockFile << std::endl;
+        global_logger->log(LOGLEVEL_ERROR, "Matt_daemon: Failed to create lock file.");
         exit(EXIT_FAILURE);
+    } else {
+        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Lock file created successfully: " + lockFile);
     }
     lockFileStream.close();
 }
@@ -186,10 +191,20 @@ void MattDaemon::deleteLockFileAndCloseSocket() {
     if (serverSocket != -1) {
         close(serverSocket);
     }
-    if (remove(lockFile.c_str()) != 0) {
-        std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
-        global_logger->log(LOGLEVEL_ERROR, "Failed to delete lock file.");
-        exit(EXIT_FAILURE);
+    if (access(lockFile.c_str(), F_OK) == 0) {
+        if (remove(lockFile.c_str()) != 0) {
+            std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
+            global_logger->log(LOGLEVEL_ERROR, "Failed to delete lock file.");
+        } else {
+            global_logger->log(LOGLEVEL_INFO, "Lock file successfully removed.");
+        }
+    } else {
+        global_logger->log(LOGLEVEL_WARN, "Lock file does not exist.");
     }
     global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Cleanup done.");
+}
+
+MattDaemon& MattDaemon::getInstance() {
+    static MattDaemon instance; // This is a static local variable, ensures it's a singleton
+    return instance;
 }

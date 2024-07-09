@@ -14,11 +14,13 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <arpa/inet.h>
-#include "Tintin_reporter.hpp"
+#include "TintinReporter.hpp"
+
+#define LOCKFILE_PATH "/var/lock/matt_daemon.lock"
 
 
 class MattDaemon {
-
+    friend class Utils;
     public:
         MattDaemon();
         MattDaemon(const MattDaemon& other);
@@ -29,6 +31,7 @@ class MattDaemon {
 
         void run();
         void daemonize();
+        static MattDaemon& getInstance();
         
     private:
         int serverSocket;
@@ -36,6 +39,7 @@ class MattDaemon {
         std::string lockFile;
         int maxClients;
         pid_t child_pid;
+        static MattDaemon* instance;
 
         void startChildAndLetParentExit();
         void runChildProcess();

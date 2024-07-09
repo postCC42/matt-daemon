@@ -1,4 +1,4 @@
-#include "Tintin_reporter.hpp"
+#include "TintinReporter.hpp"
 
 
 

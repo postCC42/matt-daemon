@@ -1,5 +1,5 @@
 #include "MattDaemon.hpp"
-#include "Tintin_reporter.hpp"
+#include "TintinReporter.hpp"
 #include "Utils.hpp"
 
 Tintin_reporter* global_logger = nullptr;
@@ -7,6 +7,10 @@ Tintin_reporter* global_logger = nullptr;
 int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
+    if (access(LOCKFILE_PATH, F_OK) == 0) {
+        std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
+        exit(EXIT_FAILURE);
+    }
     signal(SIGTERM, Utils::signalHandler);
     try {
         global_logger = new Tintin_reporter();

@@ -10,6 +10,7 @@
 #include <cerrno>
 #include <cstring>
 
+
 #define LOGFILE_PATH "/var/log/matt_daemon/matt_daemon.log"
 
 enum LogLevel {
