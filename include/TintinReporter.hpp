@@ -20,20 +20,25 @@ enum LogLevel {
     LOGLEVEL_ERROR
 };
 
+// SINGLETON PATTERN _ COPLIEN IS ADAPTED
 class TintinReporter {
     public:
         ~TintinReporter();
-        void log(int loglevel, const std::string &str) const;
-
-        static TintinReporter& getInstance();
+        void log(int loglevel, const std::string &str);
         void initializeLogFile();
+        static TintinReporter& getInstance();
 
     private:
+        // Private constructor to prevent instantiation
         TintinReporter();
-        // TODO: a true singleton should delete this methods
-        TintinReporter(const TintinReporter &rhs);
-        TintinReporter &operator=(const TintinReporter &rhs);
-        std::ofstream *logfile;
+        // Delete copy constructor and copy assignment operator
+        TintinReporter(const TintinReporter &rhs) = delete;
+        TintinReporter &operator=(const TintinReporter &rhs) = delete;
+        // Move constructor and move assignment operator
+        TintinReporter(TintinReporter&& other) noexcept;
+        TintinReporter& operator=(TintinReporter&& other) noexcept;
+
+        std::ofstream logfile;
         std::string logfileName;
         std::string addTimestampAndLogLevel(int logLevel, const std::string &str) const;
         void createLogDirectory();

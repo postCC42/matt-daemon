@@ -7,34 +7,20 @@ TintinReporter::TintinReporter() :logfileName(LOGFILE_PATH) {
 }
 
 TintinReporter::~TintinReporter() {
-    if (logfile && logfile->is_open()) {
-       logfile->close();
-       delete logfile;
+    if (logfile && logfile.is_open()) {
+       logfile.close();
     }
 }
 
-TintinReporter::TintinReporter(const TintinReporter &rhs) :logfileName(rhs.logfileName) {
-    if (rhs.logfile && rhs.logfile->is_open()) {
-       logfile = new std::ofstream(logfileName, std::ios::app);
-    } else {
-       logfile = nullptr;
-    }
+TintinReporter::TintinReporter(TintinReporter &&other) noexcept : logfile(std::move(other.logfile)) {
+    other.logfileName.clear();
 }
 
-TintinReporter &TintinReporter::operator=(const TintinReporter &rhs) {
-    if (this != &rhs) {
-       logfileName = rhs.logfileName;
-        if (logfile) {
-            if (logfile->is_open()) {
-               logfile->close();
-            }
-            delete logfile;
-        }
-        if (rhs.logfile && rhs.logfile->is_open()) {
-           logfile = new std::ofstream(logfileName, std::ios::app);
-        } else {
-           logfile = nullptr;
-        }
+TintinReporter & TintinReporter::operator=(TintinReporter &&other) noexcept {
+    if (this != &other) {
+        logfile = std::move(other.logfile);
+        logfileName = std::move(other.logfileName);
+        other.logfileName.clear();
     }
     return *this;
 }
@@ -46,10 +32,9 @@ TintinReporter &TintinReporter::getInstance() {
     return *instance;
 }
 
-
-void TintinReporter::log(int loglevel, const std::string &str) const {
-    if (logfile &&logfile->is_open()) {
-       *logfile << addTimestampAndLogLevel(loglevel, str) << std::endl;
+void TintinReporter::log(int loglevel, const std::string &str) {
+    if (logfile && logfile.is_open()) {
+       logfile << addTimestampAndLogLevel(loglevel, str) << std::endl;
     }
 }
 
@@ -60,7 +45,6 @@ std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::str
 
     std::strftime(timestring, sizeof(timestring), "[%d/%m/%Y-%H:%M:%S]", std::localtime(&currentTime));
 
-    // log level enum maybe not best solution
     std::string logLevelStr;
     switch (static_cast<LogLevel>(logLevel)) {
         case LOGLEVEL_LOG:
@@ -116,8 +100,8 @@ void TintinReporter::removeExistingLogFile() {
 }
 
 void TintinReporter::openLogFile() {
-    logfile = new std::ofstream(logfileName, std::ios_base::app);
-    if (!logfile || logfile->fail()) {
+    logfile = std::ofstream(logfileName, std::ios_base::app);
+    if (!logfile || logfile.fail()) {
         std::cerr << "Error opening log file: " << strerror(errno) << std::endl;
         exit(EXIT_FAILURE);
     }
