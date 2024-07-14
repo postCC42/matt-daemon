@@ -3,8 +3,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <thread>
-#include <chrono>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -12,7 +10,6 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <cstring>
 #include <arpa/inet.h>
 #include <poll.h>
 #include <vector>
@@ -20,7 +17,6 @@
 #include "TintinReporter.hpp"
 
 #define LOCKFILE_PATH "/var/lock/matt_daemon.lock"
-
 
 class MattDaemon {
     friend class Utils;
@@ -51,6 +47,7 @@ class MattDaemon {
         void createNewSessionAndMoveToRoot();
         void createLockFile();
         void setupServer();
+        void handleNewConnection();
         void readClientRequest(int clientSocket);
         void disconnectClient(int clientSocket);
         void deleteLockFileAndCloseSocket();
