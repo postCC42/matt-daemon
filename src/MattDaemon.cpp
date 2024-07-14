@@ -8,9 +8,8 @@ MattDaemon::MattDaemon()
     :   serverSocket(-1),
         port(4242), 
         lockFile(LOCKFILE_PATH), 
-        maxClients(3), 
-        child_pid(-1) {
-        instance = this;
+        maxClients(3) {
+    instance = this;
 }
 
 MattDaemon::MattDaemon(const MattDaemon& other)
@@ -34,10 +33,12 @@ MattDaemon& MattDaemon::operator=(MattDaemon&& other) noexcept {
 }
 
 MattDaemon::~MattDaemon() {
+    close(serverSocket);
 }
 
 void MattDaemon::run() {
     createLockFile();
+    // TODO: should we create the server inside the deamon?
     setupServer();
     daemonize();
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Entering Daemon mode.");
@@ -50,7 +51,8 @@ void MattDaemon::run() {
         }
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
 
-        std::thread(&MattDaemon::handleClientConnection, this, clientSocket).detach();
+        // TODO: if we use detach, can we ensure the thread are closed when the program ends?
+        std::thread(&MattDaemon::readClientRequest, this, clientSocket).detach();
     }
 }
 
@@ -63,8 +65,45 @@ void MattDaemon::daemonize() {
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Started.");
 }
 
+void MattDaemon::setupServer() {
+    if (!checkIfLockFileExists()) {
+        exit(EXIT_FAILURE);
+    }
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverSocket < 0) {
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Socket creation failed.");
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    sockaddr_in serverAddr = {};
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(port);
+
+    // TODO: should we set socket options?
+    int opt = 1;
+    if (setsockopt(this->serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
+        perror("setsockopt failed");
+    }
+
+    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(serverSocket, maxClients) < 0) {
+        perror("Listen failed");
+        exit(EXIT_FAILURE);
+    }
+    connectionCount = 1;
+
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Server socket n. " + std::to_string(serverSocket) + " bound and listening on port n. " + std::to_string(port));
+}
+
+
 void MattDaemon::startChildAndLetParentExit() {
-    child_pid = fork();
+    pid_t child_pid = fork();
     if (child_pid < 0) {
         std::cerr << "Failed to fork process" << std::endl;
         throw std::runtime_error("Fork failure");
@@ -78,21 +117,58 @@ void MattDaemon::startChildAndLetParentExit() {
 void MattDaemon::runChildProcess() {
     umask(0); // Allow daemon to create files with maximum permissions
 
+    // Set timeout for select
+    struct timeval timeout;
+    timeout.tv_sec = 1; // 1000 milliseconds = 1 second
+    timeout.tv_usec = 0;
 
     while (true) {
-        // TODO: the maximum number of connection should be 3
-        int clientSocket = accept(serverSocket, nullptr, nullptr);
-        if (clientSocket < 0) {
-            perror("runChild Accept failed");
-            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "run Child global Accept failed.");
-            continue;
+        FD_ZERO(&readFds);
+
+        // Add server socket
+        FD_SET(serverSocket, &readFds);
+        int maxFd = serverSocket;
+
+        // Add client sockets
+        connectionCount = clientSockets.size();
+        for (auto clientSocket : clientSockets) {
+            if (clientSocket < 0) continue;
+            FD_SET(clientSocket, &readFds);
+            if (clientSocket > maxFd) {
+                maxFd = clientSocket;
+            }
         }
 
-        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
+        int activity = select(maxFd + 1, &readFds, nullptr, nullptr, &timeout);
 
-        handleClientConnection(clientSocket);
+        if (activity < 0 && errno != EINTR) {
+            perror("select error");
+            return;
+        }
 
-        close(clientSocket);
+        // If something happened on the server socket, then it's an incoming connection
+        if (FD_ISSET(serverSocket, &readFds)) {
+            int clientSocket = accept(serverSocket, nullptr, nullptr);
+            if (clientSocket < 0) {
+                perror("accept failed");
+                TintinReporter::getInstance().log(LOGLEVEL_ERROR, "run Child global Accept failed.");
+                continue;
+            }
+            if (clientSockets.size() >= maxClients) {
+                TintinReporter::getInstance().log(LOGLEVEL_WARN, "Matt_daemon: Max clients reached. Ignoring new connection.");
+                close(clientSocket);
+                continue;
+            }
+
+            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected on socket n. " + std::to_string( clientSocket));
+            clientSockets.push_back(clientSocket);
+        }
+
+        for (auto clientSocket : clientSockets) {
+            if (FD_ISSET(clientSocket, &readFds)) {
+                readClientRequest(clientSocket);
+            }
+        }
     }
 }
 
@@ -108,36 +184,6 @@ void MattDaemon::createNewSessionAndMoveToRoot() {
     }
 }
 
-void MattDaemon::setupServer() {
-    if (!checkIfLockFileExists()) {
-        exit(EXIT_FAILURE);
-    }
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (serverSocket < 0) {
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Socket creation failed.");
-        perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
-    
-    sockaddr_in serverAddr;
-    memset(&serverAddr, 0, sizeof(serverAddr));
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port = htons(port);
-
-    if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
-        perror("Bind failed");
-        exit(EXIT_FAILURE);
-    }
-
-    if (listen(serverSocket, maxClients) < 0) {
-        perror("Listen failed");
-        exit(EXIT_FAILURE);
-    }
-    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Server socket n. " + std::to_string(serverSocket) + " bound and listening on port n. " + std::to_string(port));
-}
-
-
 void MattDaemon::createLockFile() {
     std::ofstream lockFileStream(lockFile);
     if (!lockFileStream) {
@@ -149,39 +195,51 @@ void MattDaemon::createLockFile() {
     lockFileStream.close();
 }
 
-void MattDaemon::handleClientConnection(int clientSocket) {
+void MattDaemon::readClientRequest(int clientSocket) {
     char buffer[256];
     memset(buffer, 0, sizeof(buffer));
 
-    while (true) {
-        int bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
-        if (bytesRead < 0) {
-            perror("Read failed");
-            close(clientSocket);
-            return;
-        } else if (bytesRead == 0) {
-            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client disconnected.");
-            close(clientSocket);
-            return;
-        }
+    // TODO: should use recv?
+    int bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
+    if (bytesRead < 0) {
+        perror("Read failed");
+        disconnectClient(clientSocket);
+        return;
+    } else if (bytesRead == 0) {
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client disconnected.");
+        disconnectClient(clientSocket);
+        return;
+    }
 
-        buffer[bytesRead] = '\0';
-        std::string input(buffer);
+    buffer[bytesRead] = '\0';
+    std::string input(buffer);
 
-        // TODO: there is a double new line for each log
-        TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
+    // TODO: there is a double new line for each log
+    // TODO: also print the socket number
+    TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
 
-        if (input == "quit\n") {
-            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
-            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
-            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
-            // TODO: can we close nc?
-            close(clientSocket);
-            deleteLockFileAndCloseSocket();
-            exit(EXIT_SUCCESS);
-        }
+    if (input == "quit\n") {
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
+        // TODO: can we close nc?
+        // TODO: disconnect all clients
+        disconnectClient(clientSocket);
+        deleteLockFileAndCloseSocket();
+        exit(EXIT_SUCCESS);
     }
 }
+
+void MattDaemon::disconnectClient(int clientSocket) {
+    close(clientSocket);
+
+    auto it = std::find(clientSockets.begin(), clientSockets.end(), clientSocket);
+
+    if (it != clientSockets.end()) {
+        clientSockets.erase(it);
+    }
+}
+
 
 void MattDaemon::deleteLockFileAndCloseSocket() {
     if (serverSocket != -1) {

@@ -14,6 +14,9 @@
 #include <netinet/in.h>
 #include <cstring>
 #include <arpa/inet.h>
+#include <poll.h>
+#include <vector>
+#include <algorithm>
 #include "TintinReporter.hpp"
 
 #define LOCKFILE_PATH "/var/lock/matt_daemon.lock"
@@ -37,16 +40,19 @@ class MattDaemon {
         int serverSocket;
         int port;
         std::string lockFile;
-        int maxClients;
-        pid_t child_pid;
+        unsigned int maxClients;
         static MattDaemon* instance;
+        fd_set readFds;
+        std::vector<int> clientSockets;
+        unsigned int connectionCount;
 
         void startChildAndLetParentExit();
         void runChildProcess();
         void createNewSessionAndMoveToRoot();
         void createLockFile();
         void setupServer();
-        void handleClientConnection(int clientSocket);
+        void readClientRequest(int clientSocket);
+        void disconnectClient(int clientSocket);
         void deleteLockFileAndCloseSocket();
         bool checkIfLockFileExists();
 };
