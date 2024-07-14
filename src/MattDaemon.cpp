@@ -175,6 +175,7 @@ void MattDaemon::handleClientConnection(int clientSocket) {
             TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
             TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
             TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
+            // TODO: can we close nc?
             close(clientSocket);
             deleteLockFileAndCloseSocket();
             exit(EXIT_SUCCESS);
