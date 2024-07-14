@@ -186,6 +186,7 @@ void MattDaemon::handleNewConnection() {
     }
     if (clientSockets.size() >= maxClients) {
         TintinReporter::getInstance().log(LOGLEVEL_WARN, "Matt_daemon: Max clients reached. Ignoring new connection.");
+        sendDisconnectMessage(clientSocket);
         close(clientSocket);
         return;
     }
@@ -194,9 +195,8 @@ void MattDaemon::handleNewConnection() {
     clientSockets.push_back(clientSocket);
 }
 
-void MattDaemon::readClientRequest(int clientSocket) {
-    char buffer[256];
-    memset(buffer, 0, sizeof(buffer));
+void MattDaemon::readClientRequest(const int clientSocket) {
+    char buffer[256] = {};
 
     // TODO: should use recv?
     int bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
@@ -222,15 +222,22 @@ void MattDaemon::readClientRequest(int clientSocket) {
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
-        // TODO: can we close nc?
-        // TODO: disconnect all clients
-        disconnectClient(clientSocket);
+        disconnectAllClients();
         deleteLockFileAndCloseSocket();
         exit(EXIT_SUCCESS);
     }
 }
 
+void MattDaemon::disconnectAllClients() {
+    for (auto clientSocket : clientSockets) {
+        sendDisconnectMessage(clientSocket);
+        close(clientSocket);
+    }
+    clientSockets.clear();
+}
+
 void MattDaemon::disconnectClient(int clientSocket) {
+    sendDisconnectMessage(clientSocket);
     close(clientSocket);
 
     auto it = std::find(clientSockets.begin(), clientSockets.end(), clientSocket);
@@ -240,6 +247,13 @@ void MattDaemon::disconnectClient(int clientSocket) {
     }
 }
 
+void MattDaemon::sendDisconnectMessage(int clientSocket) {
+    const char* disconnectMessage = "Connection closed\n";
+    ssize_t bytesSent = send(clientSocket, disconnectMessage, strlen(disconnectMessage), 0);
+    if (bytesSent < 0) {
+        perror("send failed");
+    }
+}
 
 void MattDaemon::deleteLockFileAndCloseSocket() {
     if (serverSocket != -1) {
