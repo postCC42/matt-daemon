@@ -49,7 +49,9 @@ class MattDaemon {
         void setupServer();
         void handleNewConnection();
         void readClientRequest(int clientSocket);
+        void disconnectAllClients();
         void disconnectClient(int clientSocket);
+        static void sendDisconnectMessage(int clientSocket);
         void deleteLockFileAndCloseSocket();
         bool checkIfLockFileExists();
 };
