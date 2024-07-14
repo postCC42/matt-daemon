@@ -47,6 +47,7 @@ class MattDaemon {
         void createNewSessionAndMoveToRoot();
         void createLockFile();
         void setupServer();
+        void handleNewConnection();
         void readClientRequest(int clientSocket);
         void disconnectClient(int clientSocket);
         void deleteLockFileAndCloseSocket();

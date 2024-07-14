@@ -98,77 +98,6 @@ void MattDaemon::setupServer() {
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Server socket n. " + std::to_string(serverSocket) + " bound and listening on port n. " + std::to_string(port));
 }
 
-
-void MattDaemon::startChildAndLetParentExit() {
-    pid_t child_pid = fork();
-    if (child_pid < 0) {
-        std::cerr << "Failed to fork process" << std::endl;
-        throw std::runtime_error("Fork failure");
-    } else if (child_pid == 0) {
-        runChildProcess();
-    } else {
-        exit(EXIT_SUCCESS);
-    }
-}
-
-void MattDaemon::runChildProcess() {
-    umask(0); // Allow daemon to create files with maximum permissions
-
-    // Set timeout for select
-    struct timeval timeout;
-    timeout.tv_sec = 1; // 1000 milliseconds = 1 second
-    timeout.tv_usec = 0;
-
-    while (true) {
-        FD_ZERO(&readFds);
-
-        // Add server socket
-        FD_SET(serverSocket, &readFds);
-        int maxFd = serverSocket;
-
-        // Add client sockets
-        connectionCount = clientSockets.size();
-        for (auto clientSocket : clientSockets) {
-            if (clientSocket < 0) continue;
-            FD_SET(clientSocket, &readFds);
-            if (clientSocket > maxFd) {
-                maxFd = clientSocket;
-            }
-        }
-
-        int activity = select(maxFd + 1, &readFds, nullptr, nullptr, &timeout);
-
-        if (activity < 0 && errno != EINTR) {
-            perror("select error");
-            return;
-        }
-
-        // If something happened on the server socket, then it's an incoming connection
-        if (FD_ISSET(serverSocket, &readFds)) {
-            int clientSocket = accept(serverSocket, nullptr, nullptr);
-            if (clientSocket < 0) {
-                perror("accept failed");
-                TintinReporter::getInstance().log(LOGLEVEL_ERROR, "run Child global Accept failed.");
-                continue;
-            }
-            if (clientSockets.size() >= maxClients) {
-                TintinReporter::getInstance().log(LOGLEVEL_WARN, "Matt_daemon: Max clients reached. Ignoring new connection.");
-                close(clientSocket);
-                continue;
-            }
-
-            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected on socket n. " + std::to_string( clientSocket));
-            clientSockets.push_back(clientSocket);
-        }
-
-        for (auto clientSocket : clientSockets) {
-            if (FD_ISSET(clientSocket, &readFds)) {
-                readClientRequest(clientSocket);
-            }
-        }
-    }
-}
-
 void MattDaemon::createNewSessionAndMoveToRoot() {
     if (setsid() < 0) {
         std::cerr << "Failed to create new session" << std::endl;
@@ -190,6 +119,79 @@ void MattDaemon::createLockFile() {
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created successfully: " + lockFile);
     }
     lockFileStream.close();
+}
+
+
+void MattDaemon::startChildAndLetParentExit() {
+    pid_t child_pid = fork();
+    if (child_pid < 0) {
+        std::cerr << "Failed to fork process" << std::endl;
+        throw std::runtime_error("Fork failure");
+    } else if (child_pid == 0) {
+        runChildProcess();
+    } else {
+        exit(EXIT_SUCCESS);
+    }
+}
+
+void MattDaemon::runChildProcess() {
+    umask(0); // Allow daemon to create files with maximum permissions
+
+    // Set timeout for select
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    while (true) {
+        FD_ZERO(&readFds);
+
+        // Add server socket
+        FD_SET(serverSocket, &readFds);
+        int maxFd = serverSocket;
+
+        // Add client sockets
+        connectionCount = clientSockets.size();
+        for (auto clientSocket : clientSockets) {
+            if (clientSocket < 0) continue;
+            FD_SET(clientSocket, &readFds);
+            if (clientSocket > maxFd) {
+                maxFd = clientSocket;
+            }
+        }
+
+        int activity = select(maxFd + 1, &readFds, nullptr, nullptr, &timeout);
+        if (activity < 0 && errno != EINTR) {
+            perror("select error");
+            return;
+        }
+
+        if (FD_ISSET(serverSocket, &readFds)) {
+            handleNewConnection();
+        }
+
+        for (auto clientSocket : clientSockets) {
+            if (FD_ISSET(clientSocket, &readFds)) {
+                readClientRequest(clientSocket);
+            }
+        }
+    }
+}
+
+void MattDaemon::handleNewConnection() {
+    int clientSocket = accept(serverSocket, nullptr, nullptr);
+    if (clientSocket < 0) {
+        perror("accept failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "run Child global Accept failed.");
+        return;
+    }
+    if (clientSockets.size() >= maxClients) {
+        TintinReporter::getInstance().log(LOGLEVEL_WARN, "Matt_daemon: Max clients reached. Ignoring new connection.");
+        close(clientSocket);
+        return;
+    }
+
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected on socket n. " + std::to_string(clientSocket));
+    clientSockets.push_back(clientSocket);
 }
 
 void MattDaemon::readClientRequest(int clientSocket) {
