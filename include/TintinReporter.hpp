@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
-
+#include <memory>
 
 #define LOGFILE_PATH "/var/log/matt_daemon/matt_daemon.log"
 
@@ -21,7 +21,6 @@ enum LogLevel {
 };
 
 class TintinReporter {
-
     public:
         TintinReporter();
         ~TintinReporter();
@@ -30,16 +29,20 @@ class TintinReporter {
         void log(int loglevel, const std::string &str) const;
         friend std::ostream &operator<<(std::ostream &out, const TintinReporter &tintin);
 
+        static TintinReporter& getInstance();
+        void initializeLogFile();
+
     private:
         std::ofstream *logfile;
         std::string logfileName;
         std::string addTimestampAndLogLevel(int logLevel, const std::string &str) const;
-        void initializeLogFile();
         void createLogDirectory();
         void removeExistingLogFile();
         void openLogFile();
         void redirectStderrToLogFile();
         void redirectStdoutToStderr();
+
+        static std::unique_ptr<TintinReporter> instance;
 };
 
 #endif 

@@ -9,7 +9,6 @@
 #include <csignal>
 #include "TintinReporter.hpp"
 #include "MattDaemon.hpp"
-extern TintinReporter* global_logger;
 
 class Utils {
 public:

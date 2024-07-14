@@ -1,13 +1,10 @@
 #include "Utils.hpp"
 
 void Utils::signalHandler(int signal) {
-    global_logger->log(LOGLEVEL_WARN, "Interrupt signal (" + std::to_string(signal) + ") received.");
+    TintinReporter::getInstance().log(LOGLEVEL_WARN, "Interrupt signal (" + std::to_string(signal) + ") received.");
     MattDaemon& daemon = MattDaemon::getInstance();
     daemon.deleteLockFileAndCloseSocket();
-    if (global_logger) {
-        delete global_logger;
-        global_logger = nullptr;
-    }
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
     std::exit(signal);
 }
 

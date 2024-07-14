@@ -2,8 +2,6 @@
 #include "TintinReporter.hpp"
 #include "Utils.hpp"
 
-TintinReporter* global_logger = nullptr;
-
 int main(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
@@ -22,20 +20,10 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
     try {
-        global_logger = new TintinReporter();
-
         MattDaemon daemon;
         daemon.run();
-
-        delete global_logger;
-        global_logger = nullptr;
-
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
-        if (global_logger) {
-            delete global_logger;
-            global_logger = nullptr;
-        }
         return EXIT_FAILURE;
     }
 

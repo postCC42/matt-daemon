@@ -2,11 +2,9 @@
 #include "TintinReporter.hpp"
 #include "Utils.hpp"
 
-extern TintinReporter *global_logger;
 MattDaemon* MattDaemon::instance = nullptr;
 
-
-MattDaemon::MattDaemon() 
+MattDaemon::MattDaemon()
     :   serverSocket(-1),
         port(4242), 
         lockFile(LOCKFILE_PATH), 
@@ -42,15 +40,15 @@ void MattDaemon::run() {
     createLockFile();
     setupServer();
     daemonize();
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Entering Daemon mode.");
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Entering Daemon mode.");
 
     while (true) {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
-            global_logger->log(LOGLEVEL_ERROR, "Accept failed: " + std::string(strerror(errno)));
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR,  "Accept failed: " + std::string(strerror(errno)));
             continue;
         }
-        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
 
         std::thread(&MattDaemon::handleClientConnection, this, clientSocket).detach();
     }
@@ -62,7 +60,7 @@ void MattDaemon::daemonize() {
     }
     startChildAndLetParentExit();
     createNewSessionAndMoveToRoot();
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Started.");
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Started.");
 }
 
 void MattDaemon::startChildAndLetParentExit() {
@@ -85,11 +83,11 @@ void MattDaemon::runChildProcess() {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
             perror("runChild Accept failed");
-            global_logger->log(LOGLEVEL_ERROR, "run Child global Accept failed.");
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "run Child global Accept failed.");
             continue;
         }
 
-        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
 
         handleClientConnection(clientSocket);
 
@@ -115,7 +113,7 @@ void MattDaemon::setupServer() {
     }
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
-        global_logger->log(LOGLEVEL_ERROR, "Socket creation failed.");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Socket creation failed.");
         perror("Socket creation failed");
         exit(EXIT_FAILURE);
     }
@@ -135,17 +133,17 @@ void MattDaemon::setupServer() {
         perror("Listen failed");
         exit(EXIT_FAILURE);
     }
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Server socket n. " + std::to_string(serverSocket) + " bound and listening on port n. " + std::to_string(port));
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Server socket n. " + std::to_string(serverSocket) + " bound and listening on port n. " + std::to_string(port));
 }
 
 
 void MattDaemon::createLockFile() {
     std::ofstream lockFileStream(lockFile);
     if (!lockFileStream) {
-        global_logger->log(LOGLEVEL_ERROR, "Matt_daemon: Failed to create lock file.");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to create lock file.");
         exit(EXIT_FAILURE);
     } else {
-        global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Lock file created successfully: " + lockFile);
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created successfully: " + lockFile);
     }
     lockFileStream.close();
 }
@@ -161,7 +159,7 @@ void MattDaemon::handleClientConnection(int clientSocket) {
             close(clientSocket);
             return;
         } else if (bytesRead == 0) {
-            global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Client disconnected.");
+            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client disconnected.");
             close(clientSocket);
             return;
         }
@@ -169,11 +167,12 @@ void MattDaemon::handleClientConnection(int clientSocket) {
         buffer[bytesRead] = '\0';
         std::string input(buffer);
 
-        global_logger->log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
+        TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
 
         if (input == "quit\n") {
-            global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
-            global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
+            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
+            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
+            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
             close(clientSocket);
             deleteLockFileAndCloseSocket();
             exit(EXIT_SUCCESS);
@@ -188,14 +187,15 @@ void MattDaemon::deleteLockFileAndCloseSocket() {
     if (access(lockFile.c_str(), F_OK) == 0) {
         if (remove(lockFile.c_str()) != 0) {
             std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
-            global_logger->log(LOGLEVEL_ERROR, "Failed to delete lock file.");
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Failed to delete lock file.");
         } else {
-            global_logger->log(LOGLEVEL_INFO, "Lock file successfully removed.");
+            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Lock file successfully removed.");
         }
     } else {
-        global_logger->log(LOGLEVEL_WARN, "Lock file does not exist.");
+        TintinReporter::getInstance().log(LOGLEVEL_WARN, "Lock file does not exist.");
     }
-    global_logger->log(LOGLEVEL_INFO, "Matt_daemon: Cleanup done.");
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Cleanup done.");
+    delete instance;
 }
 
 MattDaemon& MattDaemon::getInstance() {
@@ -205,8 +205,8 @@ MattDaemon& MattDaemon::getInstance() {
 
 bool MattDaemon::checkIfLockFileExists() {
     if (access(lockFile.c_str(), F_OK) != 0) {
-        global_logger->log(LOGLEVEL_ERROR, "Lock file not found. Can't proceed further");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Lock file not found. Can't proceed further");
         return false;
     }
-        return true;
+    return true;
 }

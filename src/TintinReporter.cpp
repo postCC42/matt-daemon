@@ -1,14 +1,15 @@
 #include "TintinReporter.hpp"
 
+std::unique_ptr<TintinReporter> TintinReporter::instance = nullptr;
+
 TintinReporter::TintinReporter() :logfileName(LOGFILE_PATH) {
     initializeLogFile();
 }
 
 TintinReporter::~TintinReporter() {
-    if (logfile &&logfile->is_open()) {
-       *logfile <<addTimestampAndLogLevel(LOGLEVEL_INFO, "Matt_Daemon is shutting down.") << std::endl;
+    if (logfile && logfile->is_open()) {
        logfile->close();
-        delete logfile;
+       delete logfile;
     }
 }
 
@@ -37,6 +38,14 @@ TintinReporter &TintinReporter::operator=(const TintinReporter &rhs) {
     }
     return *this;
 }
+
+TintinReporter &TintinReporter::getInstance() {
+    if (instance == nullptr) {
+        instance = std::make_unique<TintinReporter>();
+    }
+    return *instance;
+}
+
 
 void TintinReporter::log(int loglevel, const std::string &str) const {
     if (logfile &&logfile->is_open()) {
