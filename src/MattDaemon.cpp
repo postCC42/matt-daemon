@@ -214,8 +214,7 @@ void MattDaemon::readClientRequest(int clientSocket) {
     std::string input(buffer);
 
     // TODO: there is a double new line for each log
-    // TODO: also print the socket number
-    TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
+    TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input [" + std::to_string(clientSocket) + "]: " + input);
 
     if (input == "quit\n") {
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
