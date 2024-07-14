@@ -186,6 +186,7 @@ void MattDaemon::handleNewConnection() {
     }
     if (clientSockets.size() >= maxClients) {
         TintinReporter::getInstance().log(LOGLEVEL_WARN, "Matt_daemon: Max clients reached. Ignoring new connection.");
+        sendDisconnectMessage(clientSocket);
         close(clientSocket);
         return;
     }
