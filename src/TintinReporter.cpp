@@ -41,7 +41,7 @@ TintinReporter &TintinReporter::operator=(const TintinReporter &rhs) {
 
 TintinReporter &TintinReporter::getInstance() {
     if (instance == nullptr) {
-        instance = std::make_unique<TintinReporter>();
+        instance.reset(new TintinReporter());
     }
     return *instance;
 }
@@ -82,11 +82,6 @@ std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::str
 
     entry << timestring << " " << logLevelStr << " - " << str;
     return entry.str();
-}
-
-std::ostream &operator<<(std::ostream &out, const TintinReporter &tintin) {
-    out << "Tintin_reporter: Log file: " << tintin.logfileName;
-    return out;
 }
 
 void TintinReporter::initializeLogFile() {

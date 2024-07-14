@@ -22,17 +22,17 @@ enum LogLevel {
 
 class TintinReporter {
     public:
-        TintinReporter();
         ~TintinReporter();
-        TintinReporter(const TintinReporter &rhs);
-        TintinReporter &operator=(const TintinReporter &rhs);
         void log(int loglevel, const std::string &str) const;
-        friend std::ostream &operator<<(std::ostream &out, const TintinReporter &tintin);
 
         static TintinReporter& getInstance();
         void initializeLogFile();
 
     private:
+        TintinReporter();
+        // TODO: a true singleton should delete this methods
+        TintinReporter(const TintinReporter &rhs);
+        TintinReporter &operator=(const TintinReporter &rhs);
         std::ofstream *logfile;
         std::string logfileName;
         std::string addTimestampAndLogLevel(int logLevel, const std::string &str) const;
