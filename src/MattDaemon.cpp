@@ -2,7 +2,7 @@
 #include "TintinReporter.hpp"
 #include "Utils.hpp"
 
-extern Tintin_reporter *global_logger;
+extern TintinReporter *global_logger;
 MattDaemon* MattDaemon::instance = nullptr;
 
 

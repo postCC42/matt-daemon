@@ -2,7 +2,7 @@
 #include "TintinReporter.hpp"
 #include "Utils.hpp"
 
-Tintin_reporter* global_logger = nullptr;
+TintinReporter* global_logger = nullptr;
 
 int main(int argc, char* argv[]) {
     (void)argc;
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
     try {
-        global_logger = new Tintin_reporter();
+        global_logger = new TintinReporter();
 
         MattDaemon daemon;
         daemon.run();

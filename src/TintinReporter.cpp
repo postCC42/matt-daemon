@@ -1,12 +1,10 @@
 #include "TintinReporter.hpp"
 
-
-
-Tintin_reporter::Tintin_reporter() :logfileName(LOGFILE_PATH) {
+TintinReporter::TintinReporter() :logfileName(LOGFILE_PATH) {
     initializeLogFile();
 }
 
-Tintin_reporter::~Tintin_reporter() {
+TintinReporter::~TintinReporter() {
     if (logfile &&logfile->is_open()) {
        *logfile <<addTimestampAndLogLevel(LOGLEVEL_INFO, "Matt_Daemon is shutting down.") << std::endl;
        logfile->close();
@@ -14,7 +12,7 @@ Tintin_reporter::~Tintin_reporter() {
     }
 }
 
-Tintin_reporter::Tintin_reporter(const Tintin_reporter &rhs) :logfileName(rhs.logfileName) {
+TintinReporter::TintinReporter(const TintinReporter &rhs) :logfileName(rhs.logfileName) {
     if (rhs.logfile && rhs.logfile->is_open()) {
        logfile = new std::ofstream(logfileName, std::ios::app);
     } else {
@@ -22,7 +20,7 @@ Tintin_reporter::Tintin_reporter(const Tintin_reporter &rhs) :logfileName(rhs.lo
     }
 }
 
-Tintin_reporter &Tintin_reporter::operator=(const Tintin_reporter &rhs) {
+TintinReporter &TintinReporter::operator=(const TintinReporter &rhs) {
     if (this != &rhs) {
        logfileName = rhs.logfileName;
         if (logfile) {
@@ -40,13 +38,13 @@ Tintin_reporter &Tintin_reporter::operator=(const Tintin_reporter &rhs) {
     return *this;
 }
 
-void Tintin_reporter::log(int loglevel, const std::string &str) const {
+void TintinReporter::log(int loglevel, const std::string &str) const {
     if (logfile &&logfile->is_open()) {
        *logfile << addTimestampAndLogLevel(loglevel, str) << std::endl;
     }
 }
 
-std::string Tintin_reporter::addTimestampAndLogLevel(int logLevel, const std::string &str) const {
+std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::string &str) const {
     std::ostringstream entry;
     char timestring[26];
     std::time_t currentTime = std::time(nullptr);
@@ -77,12 +75,12 @@ std::string Tintin_reporter::addTimestampAndLogLevel(int logLevel, const std::st
     return entry.str();
 }
 
-std::ostream &operator<<(std::ostream &out, const Tintin_reporter &tintin) {
+std::ostream &operator<<(std::ostream &out, const TintinReporter &tintin) {
     out << "Tintin_reporter: Log file: " << tintin.logfileName;
     return out;
 }
 
-void Tintin_reporter::initializeLogFile() {
+void TintinReporter::initializeLogFile() {
     createLogDirectory();
     removeExistingLogFile();
     openLogFile();
@@ -92,7 +90,7 @@ void Tintin_reporter::initializeLogFile() {
     log(LOGLEVEL_INFO, "Matt_daemon: Creating server.");
 }
 
-void Tintin_reporter::createLogDirectory() {
+void TintinReporter::createLogDirectory() {
     std::size_t found = logfileName.find_last_of("/");
     if (found != std::string::npos) {
         std::string logDir = logfileName.substr(0, found);
@@ -104,7 +102,7 @@ void Tintin_reporter::createLogDirectory() {
     }
 }
 
-void Tintin_reporter::removeExistingLogFile() {
+void TintinReporter::removeExistingLogFile() {
     if (access(logfileName.c_str(), F_OK) == 0) {
         if (unlink(logfileName.c_str()) != 0) {
             std::cerr << "Error deleting log file: " << strerror(errno) << std::endl;
@@ -113,7 +111,7 @@ void Tintin_reporter::removeExistingLogFile() {
     }
 }
 
-void Tintin_reporter::openLogFile() {
+void TintinReporter::openLogFile() {
     logfile = new std::ofstream(logfileName, std::ios_base::app);
     if (!logfile || logfile->fail()) {
         std::cerr << "Error opening log file: " << strerror(errno) << std::endl;
@@ -121,14 +119,14 @@ void Tintin_reporter::openLogFile() {
     }
 }
 
-void Tintin_reporter::redirectStderrToLogFile() {
+void TintinReporter::redirectStderrToLogFile() {
     if (freopen(logfileName.c_str(), "a", stderr) == nullptr) {
         perror("Failed to redirect stderr");
         exit(EXIT_FAILURE);
     }
 }
 
-void Tintin_reporter::redirectStdoutToStderr() {
+void TintinReporter::redirectStdoutToStderr() {
     if (dup2(fileno(stderr), STDOUT_FILENO) == -1) {
         perror("Failed to redirect stdout");
         exit(EXIT_FAILURE);

@@ -20,16 +20,15 @@ enum LogLevel {
     LOGLEVEL_ERROR
 };
 
-
-class Tintin_reporter {
+class TintinReporter {
 
     public:
-        Tintin_reporter();
-        ~Tintin_reporter();
-        Tintin_reporter(const Tintin_reporter &rhs);
-        Tintin_reporter &operator=(const Tintin_reporter &rhs);
+        TintinReporter();
+        ~TintinReporter();
+        TintinReporter(const TintinReporter &rhs);
+        TintinReporter &operator=(const TintinReporter &rhs);
         void log(int loglevel, const std::string &str) const;
-        friend std::ostream &operator<<(std::ostream &out, const Tintin_reporter &tintin);
+        friend std::ostream &operator<<(std::ostream &out, const TintinReporter &tintin);
 
     private:
         std::ofstream *logfile;

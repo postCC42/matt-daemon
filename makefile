@@ -3,9 +3,10 @@ SRC_DIR := src
 INCLUDE_DIR := include
 BUILD_DIR := build
 
-SRCS := $(wildcard $(SRC_DIR)/*.cpp)
-OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
+SRC_FILES := main.cpp MattDaemon.cpp TintinReporter.cpp Utils.cpp
+SRCS := $(addprefix $(SRC_DIR)/,$(SRC_FILES))
+OBJS := $(SRC_FILES:%.cpp=$(BUILD_DIR)/%.o)
+DEPS := $(SRC_FILES:%.cpp=$(BUILD_DIR)/%.d)
 CXX_DEFS := NAME=\"$(NAME)\"
 
 CXX := g++
