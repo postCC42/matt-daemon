@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     if (access(LOCKFILE_PATH, F_OK) == 0) {
+        // TODO: the subject example log this to a file
         std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
         exit(EXIT_FAILURE);
     }

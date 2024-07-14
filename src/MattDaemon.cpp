@@ -80,6 +80,7 @@ void MattDaemon::runChildProcess() {
 
 
     while (true) {
+        // TODO: the maximum number of connection should be 3
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
             perror("runChild Accept failed");
@@ -167,6 +168,7 @@ void MattDaemon::handleClientConnection(int clientSocket) {
         buffer[bytesRead] = '\0';
         std::string input(buffer);
 
+        // TODO: there is a double new line for each log
         TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input: " + input);
 
         if (input == "quit\n") {
