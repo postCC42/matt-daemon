@@ -50,9 +50,6 @@ void MattDaemon::run() {
             continue;
         }
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
-
-        // TODO: if we use detach, can we ensure the thread are closed when the program ends?
-        std::thread(&MattDaemon::readClientRequest, this, clientSocket).detach();
     }
 }
 
