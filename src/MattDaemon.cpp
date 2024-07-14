@@ -211,12 +211,15 @@ void MattDaemon::readClientRequest(int clientSocket) {
     }
 
     buffer[bytesRead] = '\0';
+    if (buffer[bytesRead - 1] == '\n') {
+        buffer[bytesRead - 1] = '\0';
+    }
     std::string input(buffer);
 
     // TODO: there is a double new line for each log
     TintinReporter::getInstance().log(LOGLEVEL_LOG, "Matt_daemon: User input [" + std::to_string(clientSocket) + "]: " + input);
 
-    if (input == "quit\n") {
+    if (input == "quit") {
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Received quit command.");
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
