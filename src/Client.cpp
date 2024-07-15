@@ -74,7 +74,7 @@ int main() {
     wrefresh(outputwin.get());
 
     std::string str;
-    char buffer[80];
+    char buffer[800];
 
     fd_set read_fds;
     struct timeval tv;

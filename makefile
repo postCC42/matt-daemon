@@ -71,7 +71,7 @@ CXX_DEFS_FLAGS := $(foreach def,$(CXX_DEFS),-D $(def))
 all: $(NAME) $(WATCHDOG_NAME)
 
 client: $(CLIENT_OBJ)
-	$(CXX) $(CXX_FLAGS) $(CXX_HEADERS) $(WATCHDOG_OBJ) $(CLIENT_LIBS) -o $@
+	$(CXX) $(CXX_FLAGS) $(CXX_HEADERS) $(CLIENT_OBJ) $(CLIENT_LIBS) -o $@
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXX_FLAGS) $(CXX_HEADERS) $(OBJS) -o $@
