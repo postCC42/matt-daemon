@@ -10,6 +10,7 @@
 #include <cerrno>
 #include <cstring>
 #include <memory>
+#include <mutex>
 
 #define LOGFILE_PATH "/var/log/matt_daemon/matt_daemon.log"
 
@@ -27,6 +28,7 @@ class TintinReporter {
         void log(int loglevel, const std::string &str);
         void initializeLogFile();
         static TintinReporter& getInstance();
+        // void removeExistingLogFile();
 
     private:
         // Private constructor to prevent instantiation
@@ -42,7 +44,6 @@ class TintinReporter {
         std::string logfileName;
         std::string addTimestampAndLogLevel(int logLevel, const std::string &str) const;
         void createLogDirectory();
-        void removeExistingLogFile();
         void openLogFile();
         void redirectStderrToLogFile();
         void redirectStdoutToStderr();
