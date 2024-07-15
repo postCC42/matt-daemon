@@ -19,17 +19,6 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-     // Start watchdog process
-    pid_t watchdog_pid = fork();
-    if (watchdog_pid < 0) {
-        std::cerr << "Failed to fork watchdog process." << std::endl;
-        return EXIT_FAILURE;
-    } else if (watchdog_pid == 0) {
-        execl("./watchdog", "watchdog", nullptr);
-        std::cerr << "Failed to exec watchdog process." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
     signal(SIGTERM, Utils::signalHandler);
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
@@ -42,10 +31,6 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: " << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
-
-    // Wait for watchdog to finish
-    int status;
-    waitpid(watchdog_pid, &status, 0);
 
     return EXIT_SUCCESS;
 }
