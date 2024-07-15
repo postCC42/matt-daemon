@@ -9,8 +9,10 @@ int main(int argc, char* argv[]) {
         std::cerr << "Only root can run this program." << std::endl;
         return EXIT_FAILURE;
     }
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Started.");
     if (access(LOCKFILE_PATH, F_OK) == 0) {
         // TODO: the subject example log this to a file
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Error file locked.");
         std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
         exit(EXIT_FAILURE);
     }

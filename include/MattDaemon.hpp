@@ -4,11 +4,12 @@
 #include <iostream>
 #include <fstream>
 #include <signal.h>
-#include <unistd.h>
+#include <unistd.h> // close
+#include <fcntl.h> // open
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/file.h> // flock
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
@@ -36,6 +37,7 @@ class MattDaemon {
         int serverSocket;
         int port;
         std::string lockFile;
+        int lockFileDescriptor;
         unsigned int maxClients;
         static MattDaemon* instance;
         fd_set readFds;
@@ -45,15 +47,16 @@ class MattDaemon {
         void startChildAndLetParentExit();
         void runChildProcess();
         void createNewSessionAndMoveToRoot();
-        void createLockFile();
         void setupServer();
         void handleNewConnection();
         void readClientRequest(int clientSocket);
         void disconnectAllClients();
         void disconnectClient(int clientSocket);
         static void sendDisconnectMessage(int clientSocket);
-        void deleteLockFileAndCloseSocket();
         bool checkIfLockFileExists();
+        void createLockFile();
+        void deleteLockFile();
+        void deleteLockFileAndCloseSocket();
 };
 
 #endif // MATT_DAEMON_HPP

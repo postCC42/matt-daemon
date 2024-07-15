@@ -33,7 +33,7 @@ MattDaemon& MattDaemon::operator=(MattDaemon&& other) noexcept {
 }
 
 MattDaemon::~MattDaemon() {
-    close(serverSocket);
+    deleteLockFileAndCloseSocket();
 }
 
 void MattDaemon::run() {
@@ -110,17 +110,36 @@ void MattDaemon::createNewSessionAndMoveToRoot() {
     }
 }
 
+// void MattDaemon::createLockFile() {
+//     std::ofstream lockFileStream(lockFile);
+//     if (!lockFileStream) {
+//         TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to create lock file.");
+//         exit(EXIT_FAILURE);
+//     } else {
+//         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created successfully: " + lockFile);
+//     }
+//     lockFileStream.close();
+// }
+
 void MattDaemon::createLockFile() {
-    std::ofstream lockFileStream(lockFile);
-    if (!lockFileStream) {
+    lockFileDescriptor = open(lockFile.c_str(), O_CREAT | O_RDWR, 0666);
+    if (lockFileDescriptor < 0) {
         TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to create lock file.");
         exit(EXIT_FAILURE);
-    } else {
-        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created successfully: " + lockFile);
     }
-    lockFileStream.close();
-}
 
+    if (flock(lockFileDescriptor, LOCK_EX | LOCK_NB) < 0) {
+        if (errno == EWOULDBLOCK) {
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Another instance is already running.");
+        } else {
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to lock the lock file.");
+        }
+        close(lockFileDescriptor);
+        exit(EXIT_FAILURE);
+    }
+
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created and locked successfully: " + lockFile);
+}
 
 void MattDaemon::startChildAndLetParentExit() {
     pid_t child_pid = fork();
@@ -223,7 +242,7 @@ void MattDaemon::readClientRequest(const int clientSocket) {
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Quitting.");
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
         disconnectAllClients();
-        deleteLockFileAndCloseSocket();
+        deleteLockFile();
         exit(EXIT_SUCCESS);
     }
 }
@@ -255,23 +274,50 @@ void MattDaemon::sendDisconnectMessage(int clientSocket) {
     }
 }
 
+// todo close socket at exit
+void MattDaemon::deleteLockFile() {
+    if (lockFileDescriptor >= 0) {
+        flock(lockFileDescriptor, LOCK_UN); // Unlock the file
+        close(lockFileDescriptor); // Close the file descriptor
+        lockFileDescriptor = -1;
+    }
+
+    if (remove(lockFile.c_str()) != 0) {
+        std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Failed to delete lock file.");
+    } else {
+        TintinReporter::getInstance().log(LOGLEVEL_INFO, "Lock file successfully removed.");
+    }
+}
+
+
 void MattDaemon::deleteLockFileAndCloseSocket() {
     if (serverSocket != -1) {
         close(serverSocket);
     }
-    if (access(lockFile.c_str(), F_OK) == 0) {
-        if (remove(lockFile.c_str()) != 0) {
-            std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
-            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Failed to delete lock file.");
-        } else {
-            TintinReporter::getInstance().log(LOGLEVEL_INFO, "Lock file successfully removed.");
-        }
-    } else {
-        TintinReporter::getInstance().log(LOGLEVEL_WARN, "Lock file does not exist.");
-    }
+    deleteLockFile();
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Cleanup done.");
     delete instance;
 }
+
+
+// void MattDaemon::deleteLockFileAndCloseSocket() {
+//     if (serverSocket != -1) {
+//         close(serverSocket);
+//     }
+//     if (access(lockFile.c_str(), F_OK) == 0) {
+//         if (remove(lockFile.c_str()) != 0) {
+//             std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
+//             TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Failed to delete lock file.");
+//         } else {
+//             TintinReporter::getInstance().log(LOGLEVEL_INFO, "Lock file successfully removed.");
+//         }
+//     } else {
+//         TintinReporter::getInstance().log(LOGLEVEL_WARN, "Lock file does not exist.");
+//     }
+//     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Cleanup done.");
+//     delete instance;
+// }
 
 MattDaemon& MattDaemon::getInstance() {
     static MattDaemon instance; // This is a static local variable, ensures it's a singleton
