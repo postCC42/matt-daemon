@@ -72,8 +72,7 @@ void MattDaemon::setupServer() {
     }
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Socket creation failed.");
-        perror("Socket creation failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Socket creation failed: " + std::string(strerror(errno)));
         exit(EXIT_FAILURE);
     }
 
@@ -85,16 +84,16 @@ void MattDaemon::setupServer() {
     // TODO: should we set socket options?
     int opt = 1;
     if (setsockopt(this->serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
-        perror("setsockopt failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "setsockopt failed: " + std::string(strerror(errno)));
     }
 
     if (bind(serverSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
-        perror("Bind failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "bind failed: " + std::string(strerror(errno)));
         exit(EXIT_FAILURE);
     }
 
     if (listen(serverSocket, maxClients) < 0) {
-        perror("Listen failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "listen failed: " + std::string(strerror(errno)));
         exit(EXIT_FAILURE);
     }
     connectionCount = 1;
@@ -180,7 +179,7 @@ void MattDaemon::runChildProcess() {
 
         int activity = select(maxFd + 1, &readFds, nullptr, nullptr, &timeout);
         if (activity < 0 && errno != EINTR) {
-            perror("select error");
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "select failed: " + std::string(strerror(errno)));
             return;
         }
 
@@ -199,8 +198,7 @@ void MattDaemon::runChildProcess() {
 void MattDaemon::handleNewConnection() {
     int clientSocket = accept(serverSocket, nullptr, nullptr);
     if (clientSocket < 0) {
-        perror("accept failed");
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "run Child global Accept failed.");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "accept failed: " + std::string(strerror(errno)));
         return;
     }
     if (clientSockets.size() >= maxClients) {
@@ -217,10 +215,9 @@ void MattDaemon::handleNewConnection() {
 void MattDaemon::readClientRequest(const int clientSocket) {
     char buffer[256] = {};
 
-    // TODO: should use recv?
     int bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
     if (bytesRead < 0) {
-        perror("Read failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "read failed: " + std::string(strerror(errno)));
         disconnectClient(clientSocket);
         return;
     } else if (bytesRead == 0) {
@@ -270,7 +267,7 @@ void MattDaemon::sendDisconnectMessage(int clientSocket) {
     const char* disconnectMessage = "Connection closed\n";
     ssize_t bytesSent = send(clientSocket, disconnectMessage, strlen(disconnectMessage), 0);
     if (bytesSent < 0) {
-        perror("send failed");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "send failed: " + std::string(strerror(errno)));
     }
 }
 
