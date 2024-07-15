@@ -10,7 +10,6 @@
 #include <cerrno>
 #include <cstring>
 #include <memory>
-#include <mutex>
 
 #define LOGFILE_PATH "/var/log/matt_daemon/matt_daemon.log"
 
@@ -28,14 +27,13 @@ class TintinReporter {
         void log(int loglevel, const std::string &str);
         void initializeLogFile();
         static TintinReporter& getInstance();
-        // void removeExistingLogFile();
+        // Delete copy constructor and copy assignment operator
+        TintinReporter(const TintinReporter &rhs) = delete;
+        TintinReporter &operator=(const TintinReporter &rhs) = delete;
 
     private:
         // Private constructor to prevent instantiation
         TintinReporter();
-        // Delete copy constructor and copy assignment operator
-        TintinReporter(const TintinReporter &rhs) = delete;
-        TintinReporter &operator=(const TintinReporter &rhs) = delete;
         // Move constructor and move assignment operator
         TintinReporter(TintinReporter&& other) noexcept;
         TintinReporter& operator=(TintinReporter&& other) noexcept;
@@ -45,8 +43,6 @@ class TintinReporter {
         std::string addTimestampAndLogLevel(int logLevel, const std::string &str) const;
         void createLogDirectory();
         void openLogFile();
-        void redirectStderrToLogFile();
-        void redirectStdoutToStderr();
 
         static std::unique_ptr<TintinReporter> instance;
 };

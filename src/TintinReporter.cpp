@@ -70,12 +70,8 @@ std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::str
 
 void TintinReporter::initializeLogFile() {
     createLogDirectory();
-    // removeExistingLogFile();
     openLogFile();
-    redirectStderrToLogFile();
-    redirectStdoutToStderr();
     log(LOGLEVEL_INFO, "Matt_daemon: Started.");
-    // log(LOGLEVEL_INFO, "Matt_daemon: Creating server.");
 }
 
 void TintinReporter::createLogDirectory() {
@@ -90,33 +86,10 @@ void TintinReporter::createLogDirectory() {
     }
 }
 
-// void TintinReporter::removeExistingLogFile() {
-//     if (access(logfileName.c_str(), F_OK) == 0) {
-//         if (unlink(logfileName.c_str()) != 0) {
-//             std::cerr << "Error deleting log file: " << strerror(errno) << std::endl;
-//             exit(EXIT_FAILURE);
-//         }
-//     }
-// }
-
 void TintinReporter::openLogFile() {
     logfile = std::ofstream(logfileName, std::ios_base::app);
     if (!logfile || logfile.fail()) {
         std::cerr << "Error opening log file: " << strerror(errno) << std::endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void TintinReporter::redirectStderrToLogFile() {
-    if (freopen(logfileName.c_str(), "a", stderr) == nullptr) {
-        perror("Failed to redirect stderr");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void TintinReporter::redirectStdoutToStderr() {
-    if (dup2(fileno(stderr), STDOUT_FILENO) == -1) {
-        perror("Failed to redirect stdout");
         exit(EXIT_FAILURE);
     }
 }
