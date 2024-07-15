@@ -2,9 +2,10 @@
 
 void Utils::signalHandler(int signal) {
     TintinReporter::getInstance().log(LOGLEVEL_WARN, "Interrupt signal (" + std::to_string(signal) + ") received.");
-    MattDaemon& daemon = MattDaemon::getInstance();
-    daemon.deleteLockFileAndCloseSocket();
-    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
+    MattDaemon::getInstance().shutdownRequested = true;
+    // MattDaemon& daemon = MattDaemon::getInstance();
+    // daemon.deleteLockFileAndCloseSocket();
+    // TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_Daemon is shutting down.");
     std::exit(signal);
 }
 
