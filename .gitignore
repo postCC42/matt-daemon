@@ -3,4 +3,5 @@ build/
 .idea/
 .vscode/
 Matt_daemon
+watchdog
 

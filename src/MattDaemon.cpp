@@ -3,6 +3,8 @@
 #include "Utils.hpp"
 
 MattDaemon* MattDaemon::instance = nullptr;
+std::atomic<bool> shutdownRequested{false};
+
 
 MattDaemon::MattDaemon()
     :   serverSocket(-1),
@@ -43,7 +45,7 @@ void MattDaemon::run() {
     daemonize();
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Entering Daemon mode.");
 
-    while (true) {
+    while (!shutdownRequested) {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket < 0) {
             TintinReporter::getInstance().log(LOGLEVEL_ERROR,  "Accept failed: " + std::string(strerror(errno)));
@@ -51,6 +53,8 @@ void MattDaemon::run() {
         }
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Client connected.");
     }
+    deleteLockFileAndCloseSocket();
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Shutdown complete.");
 }
 
 void MattDaemon::daemonize() {
@@ -125,8 +129,20 @@ void MattDaemon::createLockFile() {
         exit(EXIT_FAILURE);
     }
 
+    std::string processName = "Matt_daemon\n";
+    ssize_t bytesWritten = write(lockFileDescriptor, processName.c_str(), processName.size());
+    if (bytesWritten != static_cast<ssize_t>(processName.size())) {
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to write PID to lock file.");
+        close(lockFileDescriptor);
+        exit(EXIT_FAILURE);
+    }
+
+    // Log the PID written
+    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: PID written to lock file: " + std::to_string(getpid()));
+
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created and locked successfully: " + lockFile);
 }
+
 
 void MattDaemon::startChildAndLetParentExit() {
     pid_t child_pid = fork();
@@ -269,10 +285,7 @@ void MattDaemon::deleteLockFile() {
         lockFileDescriptor = -1;
     }
 
-    if (remove(lockFile.c_str()) != 0) {
-        std::cerr << "Failed to delete lock file: " << lockFile << std::endl;
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Failed to delete lock file.");
-    } else {
+    if (remove(lockFile.c_str()) == 0) {
         TintinReporter::getInstance().log(LOGLEVEL_INFO, "Lock file successfully removed.");
     }
 }

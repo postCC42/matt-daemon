@@ -16,6 +16,7 @@
 #include <vector>
 #include <algorithm>
 #include "TintinReporter.hpp"
+#include <atomic>
 
 #define LOCKFILE_PATH "/var/lock/matt_daemon.lock"
 
@@ -43,6 +44,7 @@ class MattDaemon {
         fd_set readFds;
         std::vector<int> clientSockets;
         unsigned int connectionCount;
+        std::atomic<bool> shutdownRequested{false};
 
         void startChildAndLetParentExit();
         void runChildProcess();
