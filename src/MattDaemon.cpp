@@ -132,13 +132,10 @@ void MattDaemon::createLockFile() {
     std::string processName = "Matt_daemon\n";
     ssize_t bytesWritten = write(lockFileDescriptor, processName.c_str(), processName.size());
     if (bytesWritten != static_cast<ssize_t>(processName.size())) {
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to write PID to lock file.");
+        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Failed to write Matt_daemon to lock file.");
         close(lockFileDescriptor);
         exit(EXIT_FAILURE);
     }
-
-    // Log the PID written
-    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: PID written to lock file: " + std::to_string(getpid()));
 
     TintinReporter::getInstance().log(LOGLEVEL_INFO, "Matt_daemon: Lock file created and locked successfully: " + lockFile);
 }
