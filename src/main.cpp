@@ -9,13 +9,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Only root can run this program." << std::endl;
         return EXIT_FAILURE;
     }
-    TintinReporter::getInstance().log(LOGLEVEL_INFO, "Started.");
-    if (access(LOCKFILE_PATH, F_OK) == 0) {
-        // TODO: the subject example log this to a file
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Error file locked.");
-        std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
-        exit(EXIT_FAILURE);
-    }
+
     // todo handle remotion of filelock when SIGKILL
     // probably need to use a file locking mechanism 
     // that is impermeabile to unexpected terminations
@@ -23,6 +17,12 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
     try {
+        if (access(LOCKFILE_PATH, F_OK) == 0) {
+            std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Error file locked.");
+            TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Quitting.");
+            return EXIT_FAILURE;
+        }
         MattDaemon daemon;
         daemon.run();
     } catch (const std::exception& ex) {

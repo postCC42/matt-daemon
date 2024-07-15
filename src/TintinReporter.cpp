@@ -70,12 +70,12 @@ std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::str
 
 void TintinReporter::initializeLogFile() {
     createLogDirectory();
-    removeExistingLogFile();
+    // removeExistingLogFile();
     openLogFile();
     redirectStderrToLogFile();
     redirectStdoutToStderr();
     log(LOGLEVEL_INFO, "Matt_daemon: Started.");
-    log(LOGLEVEL_INFO, "Matt_daemon: Creating server.");
+    // log(LOGLEVEL_INFO, "Matt_daemon: Creating server.");
 }
 
 void TintinReporter::createLogDirectory() {
@@ -90,14 +90,14 @@ void TintinReporter::createLogDirectory() {
     }
 }
 
-void TintinReporter::removeExistingLogFile() {
-    if (access(logfileName.c_str(), F_OK) == 0) {
-        if (unlink(logfileName.c_str()) != 0) {
-            std::cerr << "Error deleting log file: " << strerror(errno) << std::endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-}
+// void TintinReporter::removeExistingLogFile() {
+//     if (access(logfileName.c_str(), F_OK) == 0) {
+//         if (unlink(logfileName.c_str()) != 0) {
+//             std::cerr << "Error deleting log file: " << strerror(errno) << std::endl;
+//             exit(EXIT_FAILURE);
+//         }
+//     }
+// }
 
 void TintinReporter::openLogFile() {
     logfile = std::ofstream(logfileName, std::ios_base::app);
