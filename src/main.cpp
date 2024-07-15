@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
     signal(SIGTERM, Utils::signalHandler);
     signal(SIGINT, Utils::signalHandler);
     signal(SIGQUIT, Utils::signalHandler);
+    signal(SIGHUP, Utils::signalHandler);
 
     try {
         MattDaemon daemon;
