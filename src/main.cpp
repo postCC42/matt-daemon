@@ -1,8 +1,6 @@
 #include "MattDaemon.hpp"
 #include "TintinReporter.hpp"
 #include "Utils.hpp"
-#include <sys/types.h>
-#include <sys/wait.h>
 
 int main(int argc, char* argv[]) {
     (void)argc;
