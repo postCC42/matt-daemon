@@ -68,6 +68,9 @@ CXX_DEFS_FLAGS := $(foreach def,$(CXX_DEFS),-D $(def))
 
 all: $(NAME) $(WATCHDOG_NAME)
 
+client: src/Client.cpp
+	$(CXX) $(CXX_FLAGS) $(CXX_HEADERS) -o client src/Client.cpp -lncurses
+
 $(NAME): $(OBJS)
 	$(CXX) $(CXX_FLAGS) $(CXX_HEADERS) $(OBJS) $(CXX_LIBS) -o $@
 
