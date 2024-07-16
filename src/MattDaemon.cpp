@@ -9,7 +9,7 @@ std::atomic<bool> shutdownRequested{false};
 MattDaemon::MattDaemon()
     :   serverSocket(-1),
         port(4242), 
-        lockFile(LOCKFILE_PATH), 
+        lockFile("/var/lock/matt_daemon.lock"), 
         maxClients(3) {
     instance = this;
 }

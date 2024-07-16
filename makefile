@@ -27,7 +27,7 @@ CXX_HEADERS := -I$(INCLUDE_DIR)
 CXX_DEPS_FLAGS := -MP -MMD
 CXX_DEFS_FLAGS := $(foreach def,$(CXX_DEFS),-D $(def))
 
-all: $(NAME) $(WATCHDOG_NAME)
+all: $(NAME)
 
 client: $(CLIENT_OBJ)
 	$(CXX) $(CXX_FLAGS) $(CXX_HEADERS) $(CLIENT_OBJ) $(CLIENT_LIBS) -o $@
@@ -56,4 +56,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re client $(WATCHDOG_NAME)
+.PHONY: all clean fclean re

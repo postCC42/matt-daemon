@@ -19,8 +19,6 @@
 #include <atomic>
 #include <utility>
 
-#define LOCKFILE_PATH "/var/lock/matt_daemon.lock"
-
 class MattDaemon {
     friend class Utils;
     public:

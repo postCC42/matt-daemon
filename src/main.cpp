@@ -10,8 +10,8 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (access(LOCKFILE_PATH, F_OK) == 0) {
-        std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
+    if (access("/var/lock/matt_daemon.lock", F_OK) == 0) {
+        std::cerr << "Can't open /var/lock/matt_daemon.lock. Another instance of Matt_daemon is already running." << std::endl;
         Tintin_reporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Error file locked.");
         Tintin_reporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Quitting.");
         return EXIT_FAILURE;
