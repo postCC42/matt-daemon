@@ -15,7 +15,7 @@
 #include <poll.h>
 #include <vector>
 #include <algorithm>
-#include "TintinReporter.hpp"
+#include "Tintin_reporter.hpp"
 #include <atomic>
 #include <utility>
 

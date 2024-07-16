@@ -1,22 +1,22 @@
-#include "TintinReporter.hpp"
+#include "Tintin_reporter.hpp"
 
-std::unique_ptr<TintinReporter> TintinReporter::instance = nullptr;
+std::unique_ptr<Tintin_reporter> Tintin_reporter::instance = nullptr;
 
-TintinReporter::TintinReporter() :logfileName(LOGFILE_PATH) {
+Tintin_reporter::Tintin_reporter() :logfileName(LOGFILE_PATH) {
     initializeLogFile();
 }
 
-TintinReporter::~TintinReporter() {
+Tintin_reporter::~Tintin_reporter() {
     if (logfile && logfile.is_open()) {
        logfile.close();
     }
 }
 
-TintinReporter::TintinReporter(TintinReporter &&other) noexcept : logfile(std::move(other.logfile)) {
+Tintin_reporter::Tintin_reporter(Tintin_reporter &&other) noexcept : logfile(std::move(other.logfile)) {
     other.logfileName.clear();
 }
 
-TintinReporter & TintinReporter::operator=(TintinReporter &&other) noexcept {
+Tintin_reporter & Tintin_reporter::operator=(Tintin_reporter &&other) noexcept {
     if (this != &other) {
         logfile = std::move(other.logfile);
         logfileName = std::move(other.logfileName);
@@ -25,20 +25,20 @@ TintinReporter & TintinReporter::operator=(TintinReporter &&other) noexcept {
     return *this;
 }
 
-TintinReporter &TintinReporter::getInstance() {
+Tintin_reporter &Tintin_reporter::getInstance() {
     if (instance == nullptr) {
-        instance.reset(new TintinReporter());
+        instance.reset(new Tintin_reporter());
     }
     return *instance;
 }
 
-void TintinReporter::log(int loglevel, const std::string &str) {
+void Tintin_reporter::log(int loglevel, const std::string &str) {
     if (logfile && logfile.is_open()) {
        logfile << addTimestampAndLogLevel(loglevel, str) << std::endl;
     }
 }
 
-std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::string &str) const {
+std::string Tintin_reporter::addTimestampAndLogLevel(int logLevel, const std::string &str) const {
     std::ostringstream entry;
     char timestring[26];
     std::time_t currentTime = std::time(nullptr);
@@ -68,13 +68,13 @@ std::string TintinReporter::addTimestampAndLogLevel(int logLevel, const std::str
     return entry.str();
 }
 
-void TintinReporter::initializeLogFile() {
+void Tintin_reporter::initializeLogFile() {
     createLogDirectory();
     openLogFile();
     log(LOGLEVEL_INFO, "Matt_daemon: Started.");
 }
 
-void TintinReporter::createLogDirectory() {
+void Tintin_reporter::createLogDirectory() {
     std::size_t found = logfileName.find_last_of("/");
     if (found != std::string::npos) {
         std::string logDir = logfileName.substr(0, found);
@@ -86,7 +86,7 @@ void TintinReporter::createLogDirectory() {
     }
 }
 
-void TintinReporter::openLogFile() {
+void Tintin_reporter::openLogFile() {
     logfile = std::ofstream(logfileName, std::ios_base::app);
     if (!logfile || logfile.fail()) {
         std::cerr << "Error opening log file: " << strerror(errno) << std::endl;

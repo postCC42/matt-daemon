@@ -21,22 +21,22 @@ enum LogLevel {
 };
 
 // SINGLETON PATTERN _ COPLIEN IS ADAPTED
-class TintinReporter {
+class Tintin_reporter {
     public:
-        ~TintinReporter();
+        ~Tintin_reporter();
         void log(int loglevel, const std::string &str);
         void initializeLogFile();
-        static TintinReporter& getInstance();
+        static Tintin_reporter& getInstance();
         // Delete copy constructor and copy assignment operator
-        TintinReporter(const TintinReporter &rhs) = delete;
-        TintinReporter &operator=(const TintinReporter &rhs) = delete;
+        Tintin_reporter(const Tintin_reporter &rhs) = delete;
+        Tintin_reporter &operator=(const Tintin_reporter &rhs) = delete;
 
     private:
         // Private constructor to prevent instantiation
-        TintinReporter();
+        Tintin_reporter();
         // Move constructor and move assignment operator
-        TintinReporter(TintinReporter&& other) noexcept;
-        TintinReporter& operator=(TintinReporter&& other) noexcept;
+        Tintin_reporter(Tintin_reporter&& other) noexcept;
+        Tintin_reporter& operator=(Tintin_reporter&& other) noexcept;
 
         std::ofstream logfile;
         std::string logfileName;
@@ -44,7 +44,7 @@ class TintinReporter {
         void createLogDirectory();
         void openLogFile();
 
-        static std::unique_ptr<TintinReporter> instance;
+        static std::unique_ptr<Tintin_reporter> instance;
 };
 
 #endif 

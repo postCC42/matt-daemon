@@ -5,7 +5,7 @@ SRC_DIR := src
 INCLUDE_DIR := include
 BUILD_DIR := build
 
-SRC_FILES := main.cpp MattDaemon.cpp TintinReporter.cpp Utils.cpp
+SRC_FILES := main.cpp MattDaemon.cpp Tintin_reporter.cpp Utils.cpp
 WATCHDOG_SRC := Watchdog.cpp
 CLIENT_SRC := Client.cpp
 

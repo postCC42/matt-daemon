@@ -1,5 +1,5 @@
 #include "MattDaemon.hpp"
-#include "TintinReporter.hpp"
+#include "Tintin_reporter.hpp"
 #include "Utils.hpp"
 
 int main(int argc, char* argv[]) {
@@ -12,8 +12,8 @@ int main(int argc, char* argv[]) {
 
     if (access(LOCKFILE_PATH, F_OK) == 0) {
         std::cerr << "Can't open " << LOCKFILE_PATH << ". Another instance of Matt_daemon is already running." << std::endl;
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Error file locked.");
-        TintinReporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Quitting.");
+        Tintin_reporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Error file locked.");
+        Tintin_reporter::getInstance().log(LOGLEVEL_ERROR, "Matt_daemon: Quitting.");
         return EXIT_FAILURE;
     }
 

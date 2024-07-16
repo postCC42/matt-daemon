@@ -7,7 +7,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <csignal>
-#include "TintinReporter.hpp"
+#include "Tintin_reporter.hpp"
 #include "MattDaemon.hpp"
 
 class Utils {
