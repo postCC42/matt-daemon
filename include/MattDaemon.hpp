@@ -17,6 +17,7 @@
 #include <algorithm>
 #include "TintinReporter.hpp"
 #include <atomic>
+#include <utility>
 
 #define LOCKFILE_PATH "/var/lock/matt_daemon.lock"
 
