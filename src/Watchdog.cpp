@@ -87,7 +87,7 @@ void daemonize() {
         exit(EXIT_FAILURE);
     }
 
-    for (int fd = sysconf(_SC_OPEN_MAX); fd >= 0; fd--) {
+    for (int fd = sysconf(_SC_OPEN_MAX) - 1; fd >= 0; fd--) {
         close(fd);
     }
 
